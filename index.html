@@ -124,20 +124,116 @@ button:disabled {
 #lyricsText { white-space: pre-wrap; }
 
 @media (max-width: 750px) {
+
+    body {
+        padding: 10px;
+    }
+
     header {
-        align-items: flex-start;
-        flex-direction: column;
+        display: none;
     }
 
     .layout {
-        grid-template-columns: 1fr;
+        display: block;
+    }
+
+    /* LEWY PANEL = PLAYER */
+    .layout > .panel:first-child {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+
+        padding: 8px 10px;
+        border-radius: 0 0 10px 10px;
+
+        box-shadow: 0 3px 10px rgba(0,0,0,.15);
+    }
+
+    /* Nazwa utworu */
+    #songTitle {
+        font-size: 15px;
+        margin: 0 0 5px 0;
+    }
+
+    /* PLAY / PAUZA / WRÓĆ */
+    .transport {
+        margin: 0 0 5px 0;
+        gap: 5px;
+    }
+
+    .transport button {
+        font-size: 13px;
+        padding: 5px 8px;
+    }
+
+    /* TIMELINE */
+    #seek {
+        margin: 2px 0;
+        height: 18px;
+    }
+
+    .time-row {
+        font-size: 11px;
+        margin-top: 0;
+    }
+
+    #markerInfo {
+        font-size: 10px;
+        margin-top: 1px;
+    }
+
+    #status {
+        display: none;
+    }
+
+    /* MIKSER */
+    #mixer {
+        margin-top: 5px;
     }
 
     .track {
-        grid-template-columns: 75px 1fr 42px 42px;
+        display: grid;
+
+        grid-template-columns:
+            55px
+            minmax(60px, 1fr)
+            32px
+            32px;
+
+        gap: 4px;
+
+        margin: 3px 0;
+
+        font-size: 11px;
     }
 
-    .lyrics { max-height: none; }
+    .track input {
+        width: 100%;
+        height: 16px;
+    }
+
+    .track button {
+        font-size: 11px;
+        padding: 3px 2px;
+        min-width: 0;
+    }
+
+    /* TEKST */
+    .lyrics {
+        margin-top: 10px;
+
+        padding: 15px;
+
+        max-height: none;
+
+        font-size: 17px;
+        line-height: 1.65;
+    }
+
+    .lyrics h2 {
+        font-size: 18px;
+        margin-top: 0;
+    }
 }
 </style>
 </head>
