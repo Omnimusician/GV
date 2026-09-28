@@ -4,9 +4,9 @@
     "folder": "utwory/When The Saints Go Marching In/",
     "tracks": [
       ["Podkład", "0 PODKŁAD.mp3"],
-      ["Sopran", "SOPRAN.mp3"],
-      ["Alt", "ALT.mp3"],
-      ["Tenor", "TENOR.mp3"]
+      ["Sopran", "1 SOPRAN.mp3"],
+      ["Alt", "2 ALT.mp3"],
+      ["Tenor", "3 TENOR.mp3"]
     ],
     "lyrics": "tekst.txt",
     "sections": [
