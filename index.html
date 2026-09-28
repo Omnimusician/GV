@@ -56,9 +56,15 @@ select {
 
 .transport {
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-bottom: 8px;
+}
+
+.transport > button {
+    flex: 0 0 auto;
+    white-space: nowrap;
 }
 
 button {
@@ -86,16 +92,15 @@ button:disabled {
 }
 
 .skip-controls {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    display: flex;
+    flex: 0 0 auto;
     gap: 4px;
-    margin-bottom: 8px;
 }
 
 .skip-controls button {
-    min-width: 0;
-    min-height: 44px;
-    padding: 6px 2px;
+    flex: 0 0 38px;
+    width: 38px;
+    padding: 6px 0;
     font-size: 13px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -273,6 +278,13 @@ button:disabled {
         padding: 5px 8px;
     }
 
+    .transport .skip-controls button {
+        flex-basis: 30px;
+        width: 30px;
+        padding: 5px 0;
+        font-size: 11px;
+    }
+
     #seek {
         margin: 2px 0;
         height: 18px;
@@ -409,9 +421,6 @@ button:disabled {
                 ↩ Wróć
             </button>
 
-        </div>
-
-
         <div class="skip-controls" role="group" aria-label="Przewijanie o sekundy">
             <button type="button" data-skip="-10" aria-label="Cofnij o 10 sekund" disabled>−10 s</button>
             <button type="button" data-skip="-5" aria-label="Cofnij o 5 sekund" disabled>−5 s</button>
@@ -419,6 +428,7 @@ button:disabled {
             <button type="button" data-skip="2" aria-label="Przewiń do przodu o 2 sekundy" disabled>+2 s</button>
             <button type="button" data-skip="5" aria-label="Przewiń do przodu o 5 sekund" disabled>+5 s</button>
             <button type="button" data-skip="10" aria-label="Przewiń do przodu o 10 sekund" disabled>+10 s</button>
+        </div>
         </div>
 
         <input
