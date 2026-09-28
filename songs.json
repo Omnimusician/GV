@@ -1,0 +1,13 @@
+{
+  "tradeItAll": {
+    "title": "Trade It All",
+    "folder": "utwory/trade it all/",
+    "tracks": [
+      ["Podkład", "podklad.mp3"],
+      ["Sopran", "sop.mp3"],
+      ["Alt", "alt.mp3"],
+      ["Tenor", "ten.mp3"]
+    ],
+    "lyrics": "tekst.txt"
+  }
+}
