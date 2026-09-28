@@ -58,7 +58,7 @@ select {
     display: flex;
     gap: 4px;
     flex-wrap: nowrap;
-    overflow-x: auto;
+    width: 100%;
     margin-bottom: 8px;
 }
 
@@ -92,14 +92,16 @@ button:disabled {
 }
 
 .skip-controls {
-    display: flex;
-    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    flex: 1 1 0;
+    min-width: 0;
     gap: 4px;
 }
 
 .skip-controls button {
-    flex: 0 0 38px;
-    width: 38px;
+    min-width: 0;
+    width: 100%;
     padding: 6px 0;
     font-size: 13px;
     font-variant-numeric: tabular-nums;
@@ -107,7 +109,9 @@ button:disabled {
 }
 
 #seek {
+    display: block;
     width: 100%;
+    margin: 2px 0;
     cursor: pointer;
 }
 
@@ -270,19 +274,21 @@ button:disabled {
 
     .transport {
         margin: 0 0 5px 0;
-        gap: 5px;
+        gap: 3px;
     }
 
     .transport button {
         font-size: 13px;
-        padding: 5px 8px;
+        padding: 5px 4px;
     }
 
     .transport .skip-controls button {
-        flex-basis: 30px;
-        width: 30px;
         padding: 5px 0;
         font-size: 11px;
+    }
+
+    .skip-controls {
+        gap: 3px;
     }
 
     #seek {
