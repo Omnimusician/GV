@@ -37,6 +37,10 @@ select {
     padding: 8px 12px;
 }
 
+#mobileSongPicker {
+    display: none;
+}
+
 .layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(300px, 1fr);
@@ -79,6 +83,22 @@ button.active {
 button:disabled {
     opacity: .5;
     cursor: default;
+}
+
+.skip-controls {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.skip-controls button {
+    min-width: 0;
+    min-height: 44px;
+    padding: 6px 2px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 #seek {
@@ -209,6 +229,17 @@ button:disabled {
 
     header {
         display: none;
+    }
+
+    #mobileSongPicker {
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    #mobileSongPicker select {
+        width: 100%;
+        min-width: 0;
+        min-height: 44px;
     }
 
     .layout {
@@ -352,7 +383,7 @@ button:disabled {
         <div>Materiały do nauki głosów</div>
     </div>
 
-    <select id="songSelect"></select>
+    <select id="songSelect" aria-label="Wybierz utwór"></select>
 
 </header>
 
@@ -362,6 +393,8 @@ button:disabled {
     <!-- PLAYER -->
 
     <div class="panel">
+
+        <div id="mobileSongPicker"></div>
 
         <h2 id="songTitle"></h2>
 
@@ -378,6 +411,15 @@ button:disabled {
 
         </div>
 
+
+        <div class="skip-controls" role="group" aria-label="Przewijanie o sekundy">
+            <button type="button" data-skip="-10" aria-label="Cofnij o 10 sekund" disabled>−10 s</button>
+            <button type="button" data-skip="-5" aria-label="Cofnij o 5 sekund" disabled>−5 s</button>
+            <button type="button" data-skip="-2" aria-label="Cofnij o 2 sekundy" disabled>−2 s</button>
+            <button type="button" data-skip="2" aria-label="Przewiń do przodu o 2 sekundy" disabled>+2 s</button>
+            <button type="button" data-skip="5" aria-label="Przewiń do przodu o 5 sekund" disabled>+5 s</button>
+            <button type="button" data-skip="10" aria-label="Przewiń do przodu o 10 sekund" disabled>+10 s</button>
+        </div>
 
         <input
             id="seek"
@@ -468,6 +510,20 @@ let songs = {};
 const songSelect =
     document.getElementById("songSelect");
 
+const desktopSongPicker = songSelect.parentElement;
+const mobileSongPicker = document.getElementById("mobileSongPicker");
+const mobileLayout = window.matchMedia("(max-width: 750px)");
+
+function placeSongPicker() {
+    const container = mobileLayout.matches
+        ? mobileSongPicker
+        : desktopSongPicker;
+    container.appendChild(songSelect);
+}
+
+mobileLayout.addEventListener("change", placeSongPicker);
+placeSongPicker();
+
 const songTitle =
     document.getElementById("songTitle");
 
@@ -482,6 +538,9 @@ const returnButton =
 
 const seek =
     document.getElementById("seek");
+
+const skipButtons =
+    document.querySelectorAll("[data-skip]");
 
 const currentTimeDisplay =
     document.getElementById("currentTime");
@@ -621,6 +680,7 @@ async function loadSong(id) {
     playPauseButton.disabled = true;
     returnButton.disabled = true;
     seek.disabled = true;
+    skipButtons.forEach(button => button.disabled = true);
 
     seek.value = 0;
 
@@ -991,6 +1051,7 @@ async function loadSong(id) {
 
         seek.disabled =
             false;
+        skipButtons.forEach(button => button.disabled = false);
 
 
         statusDisplay.textContent =
@@ -1101,6 +1162,37 @@ function renderSections() {
    Jeśli grało -> gra dalej.
    Jeśli było zatrzymane -> zostaje.
 ========================================= */
+
+function skipBy(seconds) {
+
+    if (!duration || !buffers.length) {
+        return;
+    }
+
+    const newPosition = Math.max(
+        0,
+        Math.min(duration, getCurrentPosition() + seconds)
+    );
+
+    if (isPlaying) {
+        stopSources();
+        position = newPosition;
+        createSources(position);
+    }
+    else {
+        position = newPosition;
+    }
+
+    seek.value = (newPosition / duration) * 100;
+    currentTimeDisplay.textContent = formatTime(newPosition);
+    updateActiveSection(newPosition);
+}
+
+skipButtons.forEach(button => {
+    button.addEventListener("click", () => {
+        skipBy(Number(button.dataset.skip));
+    });
+});
 
 function jumpToSection(index) {
 
