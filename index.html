@@ -1,15 +1,223 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GV – materiały do nauki</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>GV – materiały do nauki</title>
+
+<style>
+    body {
+        font-family: system-ui, sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 {
+        margin-bottom: 5px;
+    }
+
+    .transport {
+        margin: 30px 0;
+    }
+
+    #play {
+        font-size: 18px;
+        padding: 10px 20px;
+        cursor: pointer;
+    }
+
+    #seek {
+        width: 100%;
+        margin-top: 20px;
+    }
+
+    .track {
+        display: grid;
+        grid-template-columns: 100px 1fr 50px 50px;
+        gap: 10px;
+        align-items: center;
+        margin: 15px 0;
+    }
+
+    .track input {
+        width: 100%;
+    }
+
+    button.active {
+        background: #222;
+        color: white;
+    }
+</style>
 </head>
 
 <body>
-  <h1>GV 🎶</h1>
-  <p>Materiały do nauki głosów</p>
 
-  <button>▶ Odtwórz</button>
+<h1>GV 🎶</h1>
+<p>Materiały do nauki głosów</p>
+
+<h2>Test</h2>
+
+<div class="transport">
+    <button id="play">▶ Odtwórz</button>
+    <input id="seek" type="range" min="0" max="100" value="0" step="0.1">
+    <div id="time">0:00 / 0:00</div>
+</div>
+
+<div id="mixer"></div>
+
+<script>
+const tracks = [
+    ["Podkład", "podklad.mp3"],
+    ["Sopran", "sopran.mp3"],
+    ["Alt", "alt.mp3"],
+    ["Tenor", "tenor.mp3"],
+    ["Bas", "bas.mp3"]
+];
+
+const basePath = "utwory/test/";
+
+const audios = [];
+const mixer = document.getElementById("mixer");
+
+tracks.forEach(([name, file], index) => {
+
+    const audio = new Audio(basePath + file);
+    audio.preload = "auto";
+
+    audios.push(audio);
+
+    const row = document.createElement("div");
+    row.className = "track";
+
+    row.innerHTML = `
+        <strong>${name}</strong>
+
+        <input
+            type="range"
+            min="0"
+            max="1"
+            value="1"
+            step="0.01"
+            class="volume"
+        >
+
+        <button class="mute">M</button>
+        <button class="solo">S</button>
+    `;
+
+    mixer.appendChild(row);
+
+    const volume = row.querySelector(".volume");
+    const mute = row.querySelector(".mute");
+    const solo = row.querySelector(".solo");
+
+    volume.addEventListener("input", () => {
+        audio.volume = volume.value;
+    });
+
+    mute.addEventListener("click", () => {
+        audio.muted = !audio.muted;
+        mute.classList.toggle("active", audio.muted);
+    });
+
+    solo.addEventListener("click", () => {
+        solo.classList.toggle("active");
+        updateSolo();
+    });
+});
+
+function updateSolo() {
+
+    const soloButtons = [...document.querySelectorAll(".solo")];
+    const somethingSolo = soloButtons.some(b =>
+        b.classList.contains("active")
+    );
+
+    soloButtons.forEach((button, i) => {
+        if (somethingSolo) {
+            audios[i].muted = !button.classList.contains("active");
+        } else {
+            audios[i].muted = false;
+        }
+    });
+}
+
+const playButton = document.getElementById("play");
+const seek = document.getElementById("seek");
+const timeDisplay = document.getElementById("time");
+
+let playing = false;
+
+playButton.addEventListener("click", async () => {
+
+    if (!playing) {
+
+        const position = audios[0].currentTime;
+
+        audios.forEach(audio => {
+            audio.currentTime = position;
+        });
+
+        await Promise.all(
+            audios.map(audio => audio.play())
+        );
+
+        playing = true;
+        playButton.textContent = "⏸ Pauza";
+
+    } else {
+
+        audios.forEach(audio => audio.pause());
+
+        playing = false;
+        playButton.textContent = "▶ Odtwórz";
+    }
+});
+
+seek.addEventListener("input", () => {
+
+    if (!audios[0].duration) return;
+
+    const position =
+        (seek.value / 100) * audios[0].duration;
+
+    audios.forEach(audio => {
+        audio.currentTime = position;
+    });
+});
+
+function formatTime(seconds) {
+
+    if (!Number.isFinite(seconds)) return "0:00";
+
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60)
+        .toString()
+        .padStart(2, "0");
+
+    return `${min}:${sec}`;
+}
+
+function update() {
+
+    const master = audios[0];
+
+    if (master.duration) {
+
+        seek.value =
+            (master.currentTime / master.duration) * 100;
+
+        timeDisplay.textContent =
+            `${formatTime(master.currentTime)} / ${formatTime(master.duration)}`;
+    }
+
+    requestAnimationFrame(update);
+}
+
+update();
+</script>
+
 </body>
 </html>
