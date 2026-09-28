@@ -8,8 +8,7 @@
       ["Alt", "alt.mp3"],
       ["Tenor", "ten.mp3"]
     ],
-    "lyrics": "tekst.txt"
-    
+    "lyrics": "tekst.txt",    
     "sections": [
       ["Intro", "0:00"],
       ["Zwrotka 1", "0:26"],
