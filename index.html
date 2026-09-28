@@ -105,8 +105,54 @@ button:disabled {
     color: #666;
 }
 
+
+/* =========================================
+   SEKCJE UTWORU
+========================================= */
+
+#sectionsContainer {
+    margin-top: 18px;
+}
+
+#sectionsTitle {
+    margin-bottom: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+#sections {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.section-button {
+    font-size: 13px;
+    padding: 6px 9px;
+    white-space: nowrap;
+}
+
+.section-button .section-time {
+    opacity: .6;
+    margin-left: 3px;
+}
+
+.section-button.current {
+    background: #222;
+    color: white;
+    border-color: #222;
+}
+
+
+/* =========================================
+   MIKSER
+========================================= */
+
 #mixer {
-    margin-top: 25px;
+    margin-top: 20px;
 }
 
 .track {
@@ -120,6 +166,11 @@ button:disabled {
 .track input {
     width: 100%;
 }
+
+
+/* =========================================
+   TEKST
+========================================= */
 
 .lyrics {
     white-space: pre-wrap;
@@ -202,8 +253,41 @@ button:disabled {
         display: none;
     }
 
-    #mixer {
+
+    /* SEKCJE NA TELEFONIE */
+
+    #sectionsContainer {
         margin-top: 5px;
+    }
+
+    #sectionsTitle {
+        display: none;
+    }
+
+    #sections {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 4px;
+
+        padding: 2px 0 4px 0;
+
+        scrollbar-width: thin;
+
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .section-button {
+        flex: 0 0 auto;
+
+        font-size: 10px;
+        padding: 4px 6px;
+    }
+
+
+    /* MIKSER */
+
+    #mixer {
+        margin-top: 4px;
     }
 
     .track {
@@ -229,10 +313,15 @@ button:disabled {
         min-width: 0;
     }
 
+
+    /* TEKST */
+
     .lyrics {
         margin-top: 10px;
         padding: 15px;
+
         max-height: none;
+
         font-size: 17px;
         line-height: 1.65;
     }
@@ -245,15 +334,18 @@ button:disabled {
 </style>
 </head>
 
+
 <body>
 
 <header>
+
     <div>
         <h1>GV 🎶</h1>
         <div>Materiały do nauki głosów</div>
     </div>
 
     <select id="songSelect"></select>
+
 </header>
 
 
@@ -264,6 +356,7 @@ button:disabled {
     <div class="panel">
 
         <h2 id="songTitle"></h2>
+
 
         <div class="transport">
 
@@ -290,8 +383,15 @@ button:disabled {
 
 
         <div class="time-row">
-            <span id="currentTime">0:00</span>
-            <span id="duration">0:00</span>
+
+            <span id="currentTime">
+                0:00
+            </span>
+
+            <span id="duration">
+                0:00
+            </span>
+
         </div>
 
 
@@ -304,6 +404,24 @@ button:disabled {
             Ładowanie repertuaru...
         </div>
 
+
+        <!-- SEKCJE -->
+
+        <div
+            id="sectionsContainer"
+            hidden
+        >
+
+            <div id="sectionsTitle">
+                Sekcje
+            </div>
+
+            <div id="sections"></div>
+
+        </div>
+
+
+        <!-- MIKSER -->
 
         <div id="mixer"></div>
 
@@ -325,6 +443,7 @@ button:disabled {
 </div>
 
 
+
 <script>
 
 /* =========================================
@@ -335,7 +454,7 @@ let songs = {};
 
 
 /* =========================================
-   ELEMENTY STRONY
+   ELEMENTY
 ========================================= */
 
 const songSelect =
@@ -371,6 +490,16 @@ const lyricsText =
 const statusDisplay =
     document.getElementById("status");
 
+const sectionsContainer =
+    document.getElementById(
+        "sectionsContainer"
+    );
+
+const sectionsElement =
+    document.getElementById(
+        "sections"
+    );
+
 
 /* =========================================
    WEB AUDIO
@@ -395,6 +524,22 @@ let startedAt = 0;
 let returnPoint = 0;
 
 let loadingVersion = 0;
+
+
+/*
+Sekcje aktualnego utworu.
+
+Każda sekcja po przetworzeniu ma:
+
+{
+    name: "Refren 1",
+    time: 45
+}
+*/
+
+let currentSections = [];
+
+let lastActiveSection = -1;
 
 
 /* =========================================
@@ -425,7 +570,9 @@ songSelect.addEventListener(
     "change",
     () => {
 
-        loadSong(songSelect.value);
+        loadSong(
+            songSelect.value
+        );
 
     }
 );
@@ -437,13 +584,20 @@ songSelect.addEventListener(
 
 async function loadSong(id) {
 
-    const version = ++loadingVersion;
+    const version =
+        ++loadingVersion;
 
     stopSources();
 
     isPlaying = false;
+
     position = 0;
     returnPoint = 0;
+
+    duration = 0;
+
+    currentSections = [];
+    lastActiveSection = -1;
 
     updatePlayPauseButton();
 
@@ -453,28 +607,84 @@ async function loadSong(id) {
 
     mixer.innerHTML = "";
 
+    sectionsElement.innerHTML = "";
+    sectionsContainer.hidden = true;
+
     playPauseButton.disabled = true;
     returnButton.disabled = true;
     seek.disabled = true;
 
     seek.value = 0;
 
-    currentTimeDisplay.textContent = "0:00";
-    durationDisplay.textContent = "0:00";
+    currentTimeDisplay.textContent =
+        "0:00";
+
+    durationDisplay.textContent =
+        "0:00";
 
     updateMarkerDisplay();
 
-    const song = songs[id];
+
+    const song =
+        songs[id];
 
     if (!song) {
         return;
     }
 
+
     songTitle.textContent =
         song.title;
 
+
     statusDisplay.textContent =
         "Ładowanie ścieżek audio...";
+
+
+    /* =====================================
+       SEKCJE
+    ===================================== */
+
+    if (
+        Array.isArray(song.sections) &&
+        song.sections.length
+    ) {
+
+        currentSections =
+            song.sections
+                .map(
+                    ([name, time]) => {
+
+                        return {
+
+                            name: name,
+
+                            time:
+                                parseTimestamp(
+                                    time
+                                )
+
+                        };
+
+                    }
+                )
+
+                .filter(
+                    section =>
+                        Number.isFinite(
+                            section.time
+                        )
+                )
+
+                .sort(
+                    (a, b) =>
+                        a.time - b.time
+                );
+
+
+        renderSections();
+
+    }
 
 
     /* =====================================
@@ -484,7 +694,11 @@ async function loadSong(id) {
     lyricsText.textContent =
         "Ładowanie...";
 
-    fetch(song.folder + song.lyrics)
+
+    fetch(
+        song.folder +
+        song.lyrics
+    )
 
         .then(response => {
 
@@ -498,7 +712,10 @@ async function loadSong(id) {
 
         .then(text => {
 
-            if (version === loadingVersion) {
+            if (
+                version ===
+                loadingVersion
+            ) {
 
                 lyricsText.textContent =
                     text;
@@ -509,7 +726,10 @@ async function loadSong(id) {
 
         .catch(() => {
 
-            if (version === loadingVersion) {
+            if (
+                version ===
+                loadingVersion
+            ) {
 
                 lyricsText.textContent =
                     "Brak tekstu dla tego utworu.";
@@ -537,8 +757,10 @@ async function loadSong(id) {
 
                         const response =
                             await fetch(
-                                song.folder + file
+                                song.folder +
+                                file
                             );
+
 
                         if (!response.ok) {
 
@@ -549,13 +771,17 @@ async function loadSong(id) {
 
                         }
 
+
                         const arrayBuffer =
-                            await response.arrayBuffer();
+                            await response
+                                .arrayBuffer();
+
 
                         return await
-                            context.decodeAudioData(
-                                arrayBuffer
-                            );
+                            context
+                                .decodeAudioData(
+                                    arrayBuffer
+                                );
 
                     }
                 )
@@ -563,24 +789,31 @@ async function loadSong(id) {
             );
 
 
-        if (version !== loadingVersion) {
+        if (
+            version !==
+            loadingVersion
+        ) {
             return;
         }
 
 
-        buffers = loadedBuffers;
+        buffers =
+            loadedBuffers;
 
 
         duration =
             Math.min(
                 ...buffers.map(
-                    buffer => buffer.duration
+                    buffer =>
+                        buffer.duration
                 )
             );
 
 
         durationDisplay.textContent =
-            formatTime(duration);
+            formatTime(
+                duration
+            );
 
 
         /* =================================
@@ -602,13 +835,18 @@ async function loadSong(id) {
                 const gain =
                     context.createGain();
 
+
                 gain.gain.value = 1;
+
 
                 gain.connect(
                     context.destination
                 );
 
-                gainNodes.push(gain);
+
+                gainNodes.push(
+                    gain
+                );
 
 
                 const row =
@@ -616,7 +854,9 @@ async function loadSong(id) {
                         "div"
                     );
 
-                row.className = "track";
+
+                row.className =
+                    "track";
 
 
                 row.innerHTML = `
@@ -643,7 +883,9 @@ async function loadSong(id) {
                 `;
 
 
-                mixer.appendChild(row);
+                mixer.appendChild(
+                    row
+                );
 
 
                 const volume =
@@ -691,11 +933,13 @@ async function loadSong(id) {
                             !trackStates[index]
                                 .muted;
 
+
                         mute.classList.toggle(
                             "active",
                             trackStates[index]
                                 .muted
                         );
+
 
                         updateMix();
 
@@ -714,11 +958,13 @@ async function loadSong(id) {
                             !trackStates[index]
                                 .solo;
 
+
                         solo.classList.toggle(
                             "active",
                             trackStates[index]
                                 .solo
                         );
+
 
                         updateMix();
 
@@ -729,24 +975,382 @@ async function loadSong(id) {
         );
 
 
-        playPauseButton.disabled = false;
-        returnButton.disabled = false;
-        seek.disabled = false;
+        playPauseButton.disabled =
+            false;
+
+        returnButton.disabled =
+            false;
+
+        seek.disabled =
+            false;
+
 
         statusDisplay.textContent =
             "Gotowe";
+
+
+        updateActiveSection(0);
 
     }
 
     catch (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
+
 
         statusDisplay.textContent =
+
             "Błąd ładowania audio: " +
             error.message;
 
     }
+
+}
+
+
+/* =========================================
+   SEKCJE – RENDEROWANIE
+========================================= */
+
+function renderSections() {
+
+    sectionsElement.innerHTML =
+        "";
+
+
+    if (
+        !currentSections.length
+    ) {
+
+        sectionsContainer.hidden =
+            true;
+
+        return;
+
+    }
+
+
+    sectionsContainer.hidden =
+        false;
+
+
+    currentSections.forEach(
+        (section, index) => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.className =
+                "section-button";
+
+
+            button.innerHTML =
+
+                `<span>${section.name}</span>` +
+
+                `<span class="section-time">` +
+
+                formatTime(
+                    section.time
+                ) +
+
+                `</span>`;
+
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    jumpToSection(
+                        index
+                    );
+
+                }
+            );
+
+
+            sectionsElement.appendChild(
+                button
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================
+   SKOK DO SEKCJI
+
+   WAŻNE:
+   NIE ZMIENIAMY PLAY / PAUZA.
+
+   Jeśli grało -> gra dalej.
+   Jeśli było zatrzymane -> zostaje.
+========================================= */
+
+function jumpToSection(index) {
+
+    const section =
+        currentSections[index];
+
+
+    if (!section) {
+        return;
+    }
+
+
+    const newPosition =
+        Math.min(
+            section.time,
+            duration
+        );
+
+
+    /*
+    Timestamp automatycznie staje się
+    punktem ↩ Wróć.
+    */
+
+    returnPoint =
+        newPosition;
+
+
+    updateMarkerDisplay();
+
+
+    /*
+    Jeżeli utwór gra:
+    zatrzymujemy stare źródła
+    i natychmiast tworzymy nowe
+    od wskazanego miejsca.
+
+    isPlaying cały czas pozostaje TRUE.
+    */
+
+    if (isPlaying) {
+
+        stopSources();
+
+        position =
+            newPosition;
+
+        createSources(
+            position
+        );
+
+    }
+
+    else {
+
+        /*
+        Jeśli była pauza,
+        tylko zmieniamy pozycję.
+
+        isPlaying pozostaje FALSE.
+        */
+
+        position =
+            newPosition;
+
+    }
+
+
+    /*
+    Aktualizacja UI od razu,
+    bez czekania na kolejną klatkę.
+    */
+
+    seek.value =
+
+        duration
+            ? (
+                newPosition /
+                duration
+              ) * 100
+            : 0;
+
+
+    currentTimeDisplay.textContent =
+        formatTime(
+            newPosition
+        );
+
+
+    updateActiveSection(
+        newPosition
+    );
+
+}
+
+
+/* =========================================
+   AKTYWNA SEKCJA
+========================================= */
+
+function updateActiveSection(
+    currentTime
+) {
+
+    if (
+        !currentSections.length
+    ) {
+        return;
+    }
+
+
+    let activeIndex = -1;
+
+
+    for (
+        let i = 0;
+        i < currentSections.length;
+        i++
+    ) {
+
+        if (
+            currentTime >=
+            currentSections[i].time
+        ) {
+
+            activeIndex = i;
+
+        }
+
+        else {
+
+            break;
+
+        }
+
+    }
+
+
+    if (
+        activeIndex ===
+        lastActiveSection
+    ) {
+        return;
+    }
+
+
+    lastActiveSection =
+        activeIndex;
+
+
+    const buttons =
+        sectionsElement
+            .querySelectorAll(
+                ".section-button"
+            );
+
+
+    buttons.forEach(
+        (button, index) => {
+
+            button.classList.toggle(
+                "current",
+                index === activeIndex
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================
+   TIMESTAMP "2:15" -> SEKUNDY
+========================================= */
+
+function parseTimestamp(value) {
+
+    /*
+    Pozwalamy również wpisać
+    zwykłą liczbę sekund.
+    */
+
+    if (
+        typeof value === "number"
+    ) {
+
+        return value;
+
+    }
+
+
+    if (
+        typeof value !== "string"
+    ) {
+
+        return NaN;
+
+    }
+
+
+    const parts =
+        value
+            .trim()
+            .split(":")
+            .map(Number);
+
+
+    /*
+    1:23
+    */
+
+    if (
+        parts.length === 2
+    ) {
+
+        return (
+            parts[0] * 60 +
+            parts[1]
+        );
+
+    }
+
+
+    /*
+    Opcjonalnie obsługujemy też:
+    1:02:15
+    */
+
+    if (
+        parts.length === 3
+    ) {
+
+        return (
+            parts[0] * 3600 +
+            parts[1] * 60 +
+            parts[2]
+        );
+
+    }
+
+
+    /*
+    "45" = 45 sekund
+    */
+
+    if (
+        parts.length === 1 &&
+        Number.isFinite(
+            parts[0]
+        )
+    ) {
+
+        return parts[0];
+
+    }
+
+
+    return NaN;
 
 }
 
@@ -766,14 +1370,18 @@ function createSources(offset) {
             (buffer, index) => {
 
                 const source =
-                    context.createBufferSource();
+                    context
+                        .createBufferSource();
+
 
                 source.buffer =
                     buffer;
 
+
                 source.connect(
                     gainNodes[index]
                 );
+
 
                 return source;
 
@@ -782,26 +1390,30 @@ function createSources(offset) {
 
 
     /*
-    Wszystkie ścieżki otrzymują
-    dokładnie ten sam czas startu.
+    Wszystkie ścieżki dostają
+    identyczny czas startu.
     */
 
     const startTime =
-        context.currentTime + 0.05;
+        context.currentTime +
+        0.05;
 
 
-    sources.forEach(source => {
+    sources.forEach(
+        source => {
 
-        source.start(
-            startTime,
-            offset
-        );
+            source.start(
+                startTime,
+                offset
+            );
 
-    });
+        }
+    );
 
 
     startedAt =
-        startTime - offset;
+        startTime -
+        offset;
 
 }
 
@@ -814,7 +1426,9 @@ playPauseButton.addEventListener(
     "click",
     async () => {
 
-        if (!buffers.length) {
+        if (
+            !buffers.length
+        ) {
             return;
         }
 
@@ -826,13 +1440,18 @@ playPauseButton.addEventListener(
             position =
                 getCurrentPosition();
 
+
             stopSources();
 
-            isPlaying = false;
+
+            isPlaying =
+                false;
+
 
             updatePlayPauseButton();
 
             return;
+
         }
 
 
@@ -843,7 +1462,8 @@ playPauseButton.addEventListener(
 
 
         if (
-            context.state === "suspended"
+            context.state ===
+            "suspended"
         ) {
 
             await context.resume();
@@ -852,20 +1472,28 @@ playPauseButton.addEventListener(
 
 
         /*
-        Jeżeli jesteśmy na końcu,
-        zaczynamy od początku.
+        Play po zakończeniu utworu
+        startuje od początku.
         */
 
-        if (position >= duration) {
+        if (
+            position >=
+            duration
+        ) {
 
             position = 0;
 
         }
 
 
-        createSources(position);
+        createSources(
+            position
+        );
 
-        isPlaying = true;
+
+        isPlaying =
+            true;
+
 
         updatePlayPauseButton();
 
@@ -884,9 +1512,12 @@ function updatePlayPauseButton() {
         playPauseButton.textContent =
             "⏸ Pauza";
 
-        playPauseButton.classList.add(
-            "active"
-        );
+
+        playPauseButton
+            .classList
+            .add(
+                "active"
+            );
 
     }
 
@@ -895,9 +1526,12 @@ function updatePlayPauseButton() {
         playPauseButton.textContent =
             "▶ Play";
 
-        playPauseButton.classList.remove(
-            "active"
-        );
+
+        playPauseButton
+            .classList
+            .remove(
+                "active"
+            );
 
     }
 
@@ -910,19 +1544,23 @@ function updatePlayPauseButton() {
 
 function stopSources() {
 
-    sources.forEach(source => {
+    sources.forEach(
+        source => {
 
-        try {
-            source.stop();
+            try {
+                source.stop();
+            }
+            catch (e) {}
+
+
+            try {
+                source.disconnect();
+            }
+            catch (e) {}
+
         }
-        catch (e) {}
+    );
 
-        try {
-            source.disconnect();
-        }
-        catch (e) {}
-
-    });
 
     sources = [];
 
@@ -941,8 +1579,10 @@ function getCurrentPosition() {
 
     }
 
+
     const context =
         getAudioContext();
+
 
     return Math.min(
 
@@ -957,7 +1597,9 @@ function getCurrentPosition() {
 
 
 /* =========================================
-   TIMELINE / SEEK
+   RĘCZNY SEEK
+
+   Również ustawia punkt powrotu.
 ========================================= */
 
 seek.addEventListener(
@@ -972,20 +1614,18 @@ seek.addEventListener(
         const newPosition =
 
             (
-                Number(seek.value) /
+                Number(
+                    seek.value
+                ) /
                 100
             )
 
             * duration;
 
 
-        /*
-        Ręczne przesunięcie ustawia
-        nowy punkt powrotu.
-        */
-
         returnPoint =
             newPosition;
+
 
         updateMarkerDisplay();
 
@@ -994,10 +1634,14 @@ seek.addEventListener(
 
             stopSources();
 
+
             position =
                 newPosition;
 
-            createSources(position);
+
+            createSources(
+                position
+            );
 
         }
 
@@ -1007,6 +1651,11 @@ seek.addEventListener(
                 newPosition;
 
         }
+
+
+        updateActiveSection(
+            newPosition
+        );
 
     }
 );
@@ -1025,14 +1674,23 @@ returnButton.addEventListener(
         }
 
 
+        /*
+        Tak samo jak timestamp:
+        NIE zmienia trybu play/pauza.
+        */
+
         if (isPlaying) {
 
             stopSources();
 
+
             position =
                 returnPoint;
 
-            createSources(position);
+
+            createSources(
+                position
+            );
 
         }
 
@@ -1042,6 +1700,11 @@ returnButton.addEventListener(
                 returnPoint;
 
         }
+
+
+        updateActiveSection(
+            returnPoint
+        );
 
     }
 );
@@ -1055,19 +1718,24 @@ function updateMix() {
 
     const anySolo =
         trackStates.some(
-            state => state.solo
+            state =>
+                state.solo
         );
 
 
     trackStates.forEach(
         (state, index) => {
 
-            let audible = true;
+            let audible =
+                true;
 
 
-            if (state.muted) {
+            if (
+                state.muted
+            ) {
 
-                audible = false;
+                audible =
+                    false;
 
             }
 
@@ -1077,7 +1745,8 @@ function updateMix() {
                 !state.solo
             ) {
 
-                audible = false;
+                audible =
+                    false;
 
             }
 
@@ -1096,7 +1765,7 @@ function updateMix() {
 
 
 /* =========================================
-   INTERFEJS
+   AKTUALIZACJA UI
 ========================================= */
 
 function updateInterface() {
@@ -1118,11 +1787,18 @@ function updateInterface() {
 
             stopSources();
 
-            isPlaying = false;
 
-            position = duration;
+            isPlaying =
+                false;
 
-            current = duration;
+
+            position =
+                duration;
+
+
+            current =
+                duration;
+
 
             updatePlayPauseButton();
 
@@ -1139,9 +1815,20 @@ function updateInterface() {
             * 100;
 
 
-        currentTimeDisplay
-            .textContent =
-            formatTime(current);
+        currentTimeDisplay.textContent =
+            formatTime(
+                current
+            );
+
+
+        /*
+        Automatycznie podświetlamy
+        aktualną sekcję.
+        */
+
+        updateActiveSection(
+            current
+        );
 
     }
 
@@ -1162,7 +1849,9 @@ function updateMarkerDisplay() {
     markerInfo.textContent =
 
         "Punkt powrotu: " +
-        formatTime(returnPoint);
+        formatTime(
+            returnPoint
+        );
 
 }
 
@@ -1174,7 +1863,9 @@ function updateMarkerDisplay() {
 function formatTime(seconds) {
 
     if (
-        !Number.isFinite(seconds)
+        !Number.isFinite(
+            seconds
+        )
     ) {
 
         return "0:00";
@@ -1226,7 +1917,9 @@ async function initializePlayer() {
             );
 
 
-        if (!response.ok) {
+        if (
+            !response.ok
+        ) {
 
             throw new Error(
                 "Nie udało się pobrać songs.json"
@@ -1239,35 +1932,43 @@ async function initializePlayer() {
             await response.json();
 
 
-        songSelect.innerHTML = "";
+        songSelect.innerHTML =
+            "";
 
 
-        Object.entries(songs)
-            .forEach(
-                ([id, song]) => {
+        Object.entries(
+            songs
+        )
+        .forEach(
+            ([id, song]) => {
 
-                    const option =
-                        document
-                            .createElement(
-                                "option"
-                            );
-
-                    option.value =
-                        id;
-
-                    option.textContent =
-                        song.title;
-
-                    songSelect
-                        .appendChild(
-                            option
+                const option =
+                    document
+                        .createElement(
+                            "option"
                         );
 
-                }
-            );
+
+                option.value =
+                    id;
 
 
-        if (songSelect.value) {
+                option.textContent =
+                    song.title;
+
+
+                songSelect
+                    .appendChild(
+                        option
+                    );
+
+            }
+        );
+
+
+        if (
+            songSelect.value
+        ) {
 
             await loadSong(
                 songSelect.value
@@ -1286,7 +1987,10 @@ async function initializePlayer() {
 
     catch (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
+
 
         statusDisplay.textContent =
 
