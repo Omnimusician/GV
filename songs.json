@@ -9,5 +9,18 @@
       ["Tenor", "ten.mp3"]
     ],
     "lyrics": "tekst.txt"
+    
+    "sections": [
+      ["Intro", "0:00"],
+      ["Zwrotka 1", "0:26"],
+      ["Waiting with change", "0:39"]
+      ["Refren", "0:59"]
+      ["Zwrotka 2", "1:29"],
+      ["Waiting with stars", "1:43"]
+      ["Refren 2", "2:03"],
+      ["Solo wokalizy", "3:12"],
+      ["Refren 3", "4:36"]
+    ]
   }
+  
 }
