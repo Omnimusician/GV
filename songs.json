@@ -1,4 +1,28 @@
 {
+  "whenTheSaints": {
+    "title": "When The Saints Go Marching In",
+    "folder": "utwory/When The Saints Go MArching In/",
+    "tracks": [
+      ["Podkład", "0 PODKŁAD.mp3"],
+      ["Sopran", "SOPRAN .mp3"],
+      ["Alt", "ALT.mp3"],
+      ["Tenor", "TENOR.mp3"]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": [
+      ["Zwr 1", "0:00"],
+      ["Zwr 2 DRUMS", "0:19"],
+      ["Zwr 3 STARS", "0:35"],
+      ["Zwr 4 SUN", "0:51"],
+      ["Zwr 5 MOON", "1:07"],
+      ["Zwr 6 TRUMPET", "1:22"],
+      ["Zwr 7 HORSEMAN (modulacja)", "1:38"],
+      ["Zwr 8 BROTHER CHARLES", "1:54"],
+      ["Zwr 9 FINAŁ", "2:09"],
+      ["Zakończenie", "2:23"]
+    ]
+  }
+  
   "tradeItAll": {
     "title": "Trade It All",
     "folder": "utwory/trade it all/",
