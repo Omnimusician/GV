@@ -139,7 +139,7 @@ button:disabled {
 
 
 /* =========================================
-   WIDOK MOBILNY
+   MOBILE
 ========================================= */
 
 @media (max-width: 750px) {
@@ -156,15 +156,12 @@ button:disabled {
         display: block;
     }
 
-    /* Player zostaje przyklejony do góry */
-
     .layout > .panel:first-child {
         position: sticky;
         top: 0;
         z-index: 100;
 
         padding: 8px 10px;
-
         border-radius: 0 0 10px 10px;
 
         box-shadow:
@@ -176,8 +173,6 @@ button:disabled {
         margin: 0 0 5px 0;
     }
 
-    /* PLAY / PAUZA / WRÓĆ */
-
     .transport {
         margin: 0 0 5px 0;
         gap: 5px;
@@ -187,8 +182,6 @@ button:disabled {
         font-size: 13px;
         padding: 5px 8px;
     }
-
-    /* TIMELINE */
 
     #seek {
         margin: 2px 0;
@@ -208,8 +201,6 @@ button:disabled {
     #status {
         display: none;
     }
-
-    /* MIKSER */
 
     #mixer {
         margin-top: 5px;
@@ -238,14 +229,10 @@ button:disabled {
         min-width: 0;
     }
 
-    /* TEKST */
-
     .lyrics {
         margin-top: 10px;
         padding: 15px;
-
         max-height: none;
-
         font-size: 17px;
         line-height: 1.65;
     }
@@ -255,22 +242,18 @@ button:disabled {
         margin-top: 0;
     }
 }
-
 </style>
 </head>
-
 
 <body>
 
 <header>
-
     <div>
         <h1>GV 🎶</h1>
         <div>Materiały do nauki głosów</div>
     </div>
 
     <select id="songSelect"></select>
-
 </header>
 
 
@@ -284,12 +267,8 @@ button:disabled {
 
         <div class="transport">
 
-            <button id="play" disabled>
+            <button id="playPause" disabled>
                 ▶ Play
-            </button>
-
-            <button id="pause" disabled>
-                ⏸ Pauza
             </button>
 
             <button id="return" disabled>
@@ -311,15 +290,8 @@ button:disabled {
 
 
         <div class="time-row">
-
-            <span id="currentTime">
-                0:00
-            </span>
-
-            <span id="duration">
-                0:00
-            </span>
-
+            <span id="currentTime">0:00</span>
+            <span id="duration">0:00</span>
         </div>
 
 
@@ -353,17 +325,13 @@ button:disabled {
 </div>
 
 
-
 <script>
 
 /* =========================================
    REPERTUAR
-
-   Zostanie pobrany z songs.json
 ========================================= */
 
 let songs = {};
-
 
 
 /* =========================================
@@ -379,11 +347,8 @@ const songTitle =
 const mixer =
     document.getElementById("mixer");
 
-const playButton =
-    document.getElementById("play");
-
-const pauseButton =
-    document.getElementById("pause");
+const playPauseButton =
+    document.getElementById("playPause");
 
 const returnButton =
     document.getElementById("return");
@@ -407,7 +372,6 @@ const statusDisplay =
     document.getElementById("status");
 
 
-
 /* =========================================
    WEB AUDIO
 ========================================= */
@@ -424,29 +388,13 @@ let duration = 0;
 
 let isPlaying = false;
 
-/*
-Pozycja utworu, kiedy player jest
-zatrzymany.
-*/
 let position = 0;
 
-/*
-Moment rozpoczęcia playbacku według
-zegara AudioContext.
-*/
 let startedAt = 0;
 
-/*
-Miejsce, do którego prowadzi ↩ Wróć.
-*/
 let returnPoint = 0;
 
-/*
-Chroni przed sytuacją, w której użytkownik
-zmieni utwór podczas ładowania poprzedniego.
-*/
 let loadingVersion = 0;
-
 
 
 /* =========================================
@@ -469,7 +417,6 @@ function getAudioContext() {
 }
 
 
-
 /* =========================================
    ZMIANA UTWORU
 ========================================= */
@@ -482,7 +429,6 @@ songSelect.addEventListener(
 
     }
 );
-
 
 
 /* =========================================
@@ -499,14 +445,15 @@ async function loadSong(id) {
     position = 0;
     returnPoint = 0;
 
+    updatePlayPauseButton();
+
     buffers = [];
     gainNodes = [];
     trackStates = [];
 
     mixer.innerHTML = "";
 
-    playButton.disabled = true;
-    pauseButton.disabled = true;
+    playPauseButton.disabled = true;
     returnButton.disabled = true;
     seek.disabled = true;
 
@@ -517,31 +464,25 @@ async function loadSong(id) {
 
     updateMarkerDisplay();
 
-
     const song = songs[id];
 
     if (!song) {
         return;
     }
 
-
     songTitle.textContent =
         song.title;
-
 
     statusDisplay.textContent =
         "Ładowanie ścieżek audio...";
 
 
-    /*
-    TEKST
-
-    Ładujemy niezależnie od audio.
-    */
+    /* =====================================
+       TEKST
+    ===================================== */
 
     lyricsText.textContent =
         "Ładowanie...";
-
 
     fetch(song.folder + song.lyrics)
 
@@ -578,20 +519,15 @@ async function loadSong(id) {
         });
 
 
-    /*
-    AUDIO
-    */
+    /* =====================================
+       AUDIO
+    ===================================== */
 
     try {
 
         const context =
             getAudioContext();
 
-
-        /*
-        Pobieramy i dekodujemy wszystkie
-        ścieżki równolegle.
-        */
 
         const loadedBuffers =
             await Promise.all(
@@ -604,7 +540,6 @@ async function loadSong(id) {
                                 song.folder + file
                             );
 
-
                         if (!response.ok) {
 
                             throw new Error(
@@ -614,10 +549,8 @@ async function loadSong(id) {
 
                         }
 
-
                         const arrayBuffer =
                             await response.arrayBuffer();
-
 
                         return await
                             context.decodeAudioData(
@@ -630,11 +563,6 @@ async function loadSong(id) {
             );
 
 
-        /*
-        Jeśli w międzyczasie zmieniono utwór,
-        ignorujemy stare dane.
-        */
-
         if (version !== loadingVersion) {
             return;
         }
@@ -642,11 +570,6 @@ async function loadSong(id) {
 
         buffers = loadedBuffers;
 
-
-        /*
-        Długość playera = długość
-        najkrótszej ścieżki.
-        */
 
         duration =
             Math.min(
@@ -660,15 +583,12 @@ async function loadSong(id) {
             formatTime(duration);
 
 
-
         /* =================================
-           TWORZENIE MIKSERA
+           MIKSER
         ================================= */
-
 
         song.tracks.forEach(
             ([name], index) => {
-
 
                 trackStates.push({
 
@@ -679,14 +599,8 @@ async function loadSong(id) {
                 });
 
 
-                /*
-                Każda ścieżka dostaje
-                własny GainNode.
-                */
-
                 const gain =
                     context.createGain();
-
 
                 gain.gain.value = 1;
 
@@ -696,11 +610,6 @@ async function loadSong(id) {
 
                 gainNodes.push(gain);
 
-
-
-                /*
-                UI ścieżki
-                */
 
                 const row =
                     document.createElement(
@@ -737,7 +646,6 @@ async function loadSong(id) {
                 mixer.appendChild(row);
 
 
-
                 const volume =
                     row.querySelector(
                         ".volume"
@@ -752,7 +660,6 @@ async function loadSong(id) {
                     row.querySelector(
                         ".solo"
                     );
-
 
 
                 /* GŁOŚNOŚĆ */
@@ -773,7 +680,6 @@ async function loadSong(id) {
                 );
 
 
-
                 /* MUTE */
 
                 mute.addEventListener(
@@ -785,19 +691,16 @@ async function loadSong(id) {
                             !trackStates[index]
                                 .muted;
 
-
                         mute.classList.toggle(
                             "active",
                             trackStates[index]
                                 .muted
                         );
 
-
                         updateMix();
 
                     }
                 );
-
 
 
                 /* SOLO */
@@ -811,13 +714,11 @@ async function loadSong(id) {
                             !trackStates[index]
                                 .solo;
 
-
                         solo.classList.toggle(
                             "active",
                             trackStates[index]
                                 .solo
                         );
-
 
                         updateMix();
 
@@ -828,23 +729,18 @@ async function loadSong(id) {
         );
 
 
-
-        playButton.disabled = false;
-        pauseButton.disabled = false;
+        playPauseButton.disabled = false;
         returnButton.disabled = false;
         seek.disabled = false;
 
-
         statusDisplay.textContent =
             "Gotowe";
-
 
     }
 
     catch (error) {
 
         console.error(error);
-
 
         statusDisplay.textContent =
             "Błąd ładowania audio: " +
@@ -855,12 +751,8 @@ async function loadSong(id) {
 }
 
 
-
 /* =========================================
    TWORZENIE ŹRÓDEŁ AUDIO
-
-   Wszystkie ścieżki korzystają z jednego
-   zegara AudioContext.
 ========================================= */
 
 function createSources(offset) {
@@ -876,15 +768,12 @@ function createSources(offset) {
                 const source =
                     context.createBufferSource();
 
-
                 source.buffer =
                     buffer;
-
 
                 source.connect(
                     gainNodes[index]
                 );
-
 
                 return source;
 
@@ -893,10 +782,8 @@ function createSources(offset) {
 
 
     /*
-    Wszystkie ścieżki dostają dokładnie
-    ten sam moment startu.
-
-    50 ms daje przeglądarce mały zapas.
+    Wszystkie ścieżki otrzymują
+    dokładnie ten sam czas startu.
     */
 
     const startTime =
@@ -913,42 +800,47 @@ function createSources(offset) {
     });
 
 
-    /*
-    Dzięki temu możemy później policzyć
-    dokładną pozycję playbacku.
-    */
-
     startedAt =
         startTime - offset;
 
 }
 
 
-
 /* =========================================
-   PLAY
+   PLAY / PAUZA
 ========================================= */
 
-playButton.addEventListener(
+playPauseButton.addEventListener(
     "click",
     async () => {
 
-        if (
-            !buffers.length ||
-            isPlaying
-        ) {
+        if (!buffers.length) {
             return;
         }
 
 
+        /* PAUZA */
+
+        if (isPlaying) {
+
+            position =
+                getCurrentPosition();
+
+            stopSources();
+
+            isPlaying = false;
+
+            updatePlayPauseButton();
+
+            return;
+        }
+
+
+        /* PLAY */
+
         const context =
             getAudioContext();
 
-
-        /*
-        Telefony często uruchamiają
-        AudioContext jako suspended.
-        */
 
         if (
             context.state === "suspended"
@@ -960,8 +852,8 @@ playButton.addEventListener(
 
 
         /*
-        Play po dojściu do końca
-        zaczyna od początku.
+        Jeżeli jesteśmy na końcu,
+        zaczynamy od początku.
         */
 
         if (position >= duration) {
@@ -975,39 +867,45 @@ playButton.addEventListener(
 
         isPlaying = true;
 
+        updatePlayPauseButton();
+
     }
 );
 
 
-
 /* =========================================
-   PAUZA
+   WYGLĄD PLAY / PAUZA
 ========================================= */
 
-pauseButton.addEventListener(
-    "click",
-    () => {
+function updatePlayPauseButton() {
 
-        if (!isPlaying) {
-            return;
-        }
+    if (isPlaying) {
 
+        playPauseButton.textContent =
+            "⏸ Pauza";
 
-        position =
-            getCurrentPosition();
-
-
-        stopSources();
-
-        isPlaying = false;
+        playPauseButton.classList.add(
+            "active"
+        );
 
     }
-);
 
+    else {
+
+        playPauseButton.textContent =
+            "▶ Play";
+
+        playPauseButton.classList.remove(
+            "active"
+        );
+
+    }
+
+}
 
 
 /* =========================================
-   ZATRZYMANIE BUFFER SOURCES
+   ZATRZYMANIE SOURCES
 ========================================= */
 
 function stopSources() {
@@ -1019,7 +917,6 @@ function stopSources() {
         }
         catch (e) {}
 
-
         try {
             source.disconnect();
         }
@@ -1027,11 +924,9 @@ function stopSources() {
 
     });
 
-
     sources = [];
 
 }
-
 
 
 /* =========================================
@@ -1046,10 +941,8 @@ function getCurrentPosition() {
 
     }
 
-
     const context =
         getAudioContext();
-
 
     return Math.min(
 
@@ -1063,11 +956,8 @@ function getCurrentPosition() {
 }
 
 
-
 /* =========================================
-   RĘCZNE PRZESUWANIE TIMELINE
-
-   Ustawia również punkt ↩ Wróć.
+   TIMELINE / SEEK
 ========================================= */
 
 seek.addEventListener(
@@ -1090,21 +980,15 @@ seek.addEventListener(
 
 
         /*
-        Zapamiętujemy punkt powrotu.
+        Ręczne przesunięcie ustawia
+        nowy punkt powrotu.
         */
 
         returnPoint =
             newPosition;
 
-
         updateMarkerDisplay();
 
-
-
-        /*
-        Jeśli player aktualnie gra,
-        tworzymy nowe BufferSource.
-        */
 
         if (isPlaying) {
 
@@ -1128,9 +1012,8 @@ seek.addEventListener(
 );
 
 
-
 /* =========================================
-   WRÓĆ DO ZNACZNIKA
+   WRÓĆ
 ========================================= */
 
 returnButton.addEventListener(
@@ -1164,7 +1047,6 @@ returnButton.addEventListener(
 );
 
 
-
 /* =========================================
    MIXER
 ========================================= */
@@ -1179,7 +1061,6 @@ function updateMix() {
 
     trackStates.forEach(
         (state, index) => {
-
 
             let audible = true;
 
@@ -1214,9 +1095,8 @@ function updateMix() {
 }
 
 
-
 /* =========================================
-   AKTUALIZACJA INTERFEJSU
+   INTERFEJS
 ========================================= */
 
 function updateInterface() {
@@ -1228,7 +1108,7 @@ function updateInterface() {
 
 
         /*
-        Koniec utworu.
+        KONIEC UTWORU
         */
 
         if (
@@ -1243,6 +1123,8 @@ function updateInterface() {
             position = duration;
 
             current = duration;
+
+            updatePlayPauseButton();
 
         }
 
@@ -1271,7 +1153,6 @@ function updateInterface() {
 }
 
 
-
 /* =========================================
    PUNKT POWROTU
 ========================================= */
@@ -1284,7 +1165,6 @@ function updateMarkerDisplay() {
         formatTime(returnPoint);
 
 }
-
 
 
 /* =========================================
@@ -1328,12 +1208,8 @@ function formatTime(seconds) {
 }
 
 
-
 /* =========================================
    INICJALIZACJA
-
-   Pobieramy songs.json i na jego podstawie
-   tworzymy repertuar.
 ========================================= */
 
 async function initializePlayer() {
@@ -1363,21 +1239,12 @@ async function initializePlayer() {
             await response.json();
 
 
-        /*
-        Czyścimy dropdown na wszelki wypadek.
-        */
-
         songSelect.innerHTML = "";
 
-
-        /*
-        Tworzymy listę utworów.
-        */
 
         Object.entries(songs)
             .forEach(
                 ([id, song]) => {
-
 
                     const option =
                         document
@@ -1385,14 +1252,11 @@ async function initializePlayer() {
                                 "option"
                             );
 
-
                     option.value =
                         id;
 
-
                     option.textContent =
                         song.title;
-
 
                     songSelect
                         .appendChild(
@@ -1402,11 +1266,6 @@ async function initializePlayer() {
                 }
             );
 
-
-        /*
-        Automatycznie ładujemy
-        pierwszy utwór.
-        */
 
         if (songSelect.value) {
 
@@ -1429,7 +1288,6 @@ async function initializePlayer() {
 
         console.error(error);
 
-
         statusDisplay.textContent =
 
             "Błąd wczytywania repertuaru: " +
@@ -1438,7 +1296,6 @@ async function initializePlayer() {
     }
 
 }
-
 
 
 /* =========================================
