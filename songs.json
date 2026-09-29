@@ -35,6 +35,19 @@
     ]
   },
 
+  "wadeInTheWater": {
+    "title": "Wade In The Water",
+    "folder": "utwory/wade/",
+    "tracks": [
+      ["Podkład", "Wade podklad.mp3"],
+      ["Sopran", "Wade sopran.mp3"],
+      ["Alt", "Wade alt.mp3"],
+      ["Tenor", "Wade tenor.mp3"]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": []
+  },
+
   "whenTheSaints": {
     "title": "When The Saints Go Marching In",
     "folder": "utwory/When The Saints Go Marching In/",
