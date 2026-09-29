@@ -26,7 +26,8 @@
       ["Podkład", "podklad.mp3"],
       ["Sopran", "sop.mp3"],
       ["Alt", "alt.mp3"],
-      ["Tenor", "ten.mp3"]
+      ["Tenor", "ten.mp3"],
+      ["Solo", "SOLO.mp3"]
     ],
     "lyrics": "tekst.txt",
     "sections": [
