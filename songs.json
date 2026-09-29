@@ -1,4 +1,40 @@
 {
+  "ohLord": {
+    "title": "Oh Lord, How Excellent",
+    "folder": "utwory/oh lord/",
+    "tracks": [
+      ["Podkład", "Oh Lord 0 PODKLAD.mp3"],
+      ["Sopran", "Oh Lord 1 SOP.mp3"],
+      ["Alt", "Oh Lord 2 ALT.mp3"],
+      ["Tenor", "Oh Lord 3 TEN.mp3"]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": []
+  },
+
+  "tradeItAll": {
+    "title": "Trade It All",
+    "folder": "utwory/trade it all/",
+    "tracks": [
+      ["Podkład", "podklad.mp3"],
+      ["Sopran", "sop.mp3"],
+      ["Alt", "alt.mp3"],
+      ["Tenor", "ten.mp3"]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": [
+      ["Intro", "0:00"],
+      ["Zwrotka 1", "0:26"],
+      ["Waiting with change", "0:39"],
+      ["Refren", "0:59"],
+      ["Zwrotka 2", "1:29"],
+      ["Waiting with stars", "1:43"],
+      ["Refren 2", "2:03"],
+      ["Solo wokalizy", "3:12"],
+      ["Refren 3", "4:36"]
+    ]
+  },
+
   "whenTheSaints": {
     "title": "When The Saints Go Marching In",
     "folder": "utwory/When The Saints Go Marching In/",
@@ -20,29 +56,6 @@
       ["Zwr 8 BROTHER CHARLES", "1:54"],
       ["Zwr 9 FINAŁ", "2:09"],
       ["Zakończenie", "2:23"]
-    ]
-  },
-  
-  "tradeItAll": {
-    "title": "Trade It All",
-    "folder": "utwory/trade it all/",
-    "tracks": [
-      ["Podkład", "podklad.mp3"],
-      ["Sopran", "sop.mp3"],
-      ["Alt", "alt.mp3"],
-      ["Tenor", "ten.mp3"]
-    ],
-    "lyrics": "tekst.txt",
-    "sections": [
-      ["Intro", "0:00"],
-      ["Zwrotka 1", "0:26"],
-      ["Waiting with change", "0:39"],
-      ["Refren", "0:59"],
-      ["Zwrotka 2", "1:29"],
-      ["Waiting with stars", "1:43"],
-      ["Refren 2", "2:03"],
-      ["Solo wokalizy", "3:12"],
-      ["Refren 3", "4:36"]
     ]
   }
 }
