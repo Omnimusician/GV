@@ -9,7 +9,14 @@
       ["Tenor", "Oh Lord 3 TEN.mp3"]
     ],
     "lyrics": "tekst.txt",
-    "sections": []
+    "sections": [
+      ["Intro, Oh Lord", "0:00"],
+      ["There is none", "1:22"],
+      ["In all the earth 1", "2:33"],
+      ["In all the earth 2", "3:05"],
+      ["In all the earth 3", "3:37"],
+      ["Excellent, excellent", "3:54"]
+    ]
   },
 
   "tradeItAll": {
@@ -45,7 +52,17 @@
       ["Tenor", "Wade tenor.mp3"]
     ],
     "lyrics": "tekst.txt",
-    "sections": []
+    "sections": [
+      ["Wade in the water 1", "0:00"],
+      ["We are the sons 1", "0:26"],
+      ["Wade in the water 2", "0:47"],
+      ["We are the sons 2", "1:09"],
+      ["We no go shy", "1:31"],
+      ["Wade in the water 3", "1:52"],
+      ["Bridge 1", "2:12"],
+      ["Wade in the water 4", "2:34"],
+      ["Bridge 2", "2:55"]
+    ]
   },
 
   "whenTheSaints": {
