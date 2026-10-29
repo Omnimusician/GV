@@ -1,4 +1,17 @@
 {
+  "ojMaluski": {
+    "title": "Kolędy: Oj Maluśki",
+    "folder": "utwory/kolędy/oj maluśki/",
+    "tracks": [
+      ["Podkład", "oj maluśki podkl.mp3"],
+      ["Sopran", "oj maluśki Sop.mp3"],
+      ["Alt", "oj maluśki Alt.mp3"],
+      ["Tenor", "oj maluśki Ten.mp3"]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": []
+  },
+
   "ohLord": {
     "title": "Oh Lord, How Excellent",
     "folder": "utwory/oh lord/",
