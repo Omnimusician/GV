@@ -9,7 +9,13 @@
       ["Tenor", "oj maluśki Ten.mp3"]
     ],
     "lyrics": "tekst.txt",
-    "sections": []
+    "sections": [
+      ["Zwrotka 1", "0:06"],
+      ["Refren 1", "0:38"],
+      ["Zwrotka 2", "0:52"],
+      ["Refren 2", "1:25"],
+      ["Lili laj", "1:40"]
+    ]
   },
 
   "ohLord": {
