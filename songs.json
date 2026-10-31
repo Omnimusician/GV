@@ -1,4 +1,17 @@
 {
+  "gdySieChrystusRodzi": {
+    "title": "Kolędy: Gdy się Chrystus rodzi",
+    "folder": "utwory/kolędy/gdy się chrystus rodzi/",
+    "tracks": [
+      ["Podkład", "gdy się chrystus podklad.mp3"],
+      ["Sopran", "gdy się chrystus Sop.mp3"],
+      ["Alt", "gdy się chrystus Alt.mp3"],
+      ["Tenor", "gdy się chrystus Ten.mp3"]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": []
+  },
+
   "ojMaluski": {
     "title": "Kolędy: Oj Maluśki",
     "folder": "utwory/kolędy/oj maluśki/",
