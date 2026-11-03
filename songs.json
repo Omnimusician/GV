@@ -1,4 +1,21 @@
 {
+  "gdySlicznaPanna": {
+    "title": "Kolędy: Gdy śliczna Panna",
+    "folder": "utwory/kolędy/gdy śliczna/",
+    "tracks": [
+      ["Podkład", "gdy śliczna panna podkład.mp3"],
+      ["Sopran górny", "gdy śliczna panna sopran górny.mp3"],
+      ["Sopran dolny", "gdy śliczna panna sopran dolny.mp3"],
+      ["Alt", "gdy śliczna panna alt.mp3"],
+      ["Tenor", "gdy śliczna panna tenor.mp3"]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": [
+      ["Zwrotka", "0:22"],
+      ["Refren", "0:41"]
+    ]
+  },
+
   "gdySieChrystusRodzi": {
     "title": "Kolędy: Gdy się Chrystus rodzi",
     "folder": "utwory/kolędy/gdy się chrystus rodzi/",
