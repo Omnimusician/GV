@@ -1,4 +1,58 @@
 {
+  "goTellItOnTheMountain": {
+    "title": "Kolędy: Go Tell It On The Mountain",
+    "folder": "utwory/kolędy/go tell it/",
+    "tracks": [
+      [
+        "Podkład",
+        "go tell it on the mountain podklad.mp3"
+      ],
+      [
+        "Sopran",
+        "go tell it on the mountain sop.mp3"
+      ],
+      [
+        "Alt",
+        "go tell it on the mountain alt.mp3"
+      ],
+      [
+        "Tenor",
+        "go tell it on the mountain ten.mp3"
+      ]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": [
+      [
+        "Refren 1",
+        "0:00"
+      ],
+      [
+        "Zwrotka 1",
+        "0:18"
+      ],
+      [
+        "Refren 2",
+        "0:37"
+      ],
+      [
+        "Zwrotka 2",
+        "0:56"
+      ],
+      [
+        "Refren 3",
+        "1:15"
+      ],
+      [
+        "Zwrotka 3",
+        "1:34"
+      ],
+      [
+        "Refren 4",
+        "1:54"
+      ]
+    ]
+  },
+
   "gdySlicznaPanna": {
     "title": "Kolędy: Gdy śliczna Panna",
     "folder": "utwory/kolędy/gdy śliczna/",
