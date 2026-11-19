@@ -607,6 +607,16 @@ let returnPoint = 0;
 let loadingVersion = 0;
 
 // A real media element lets the OS manage background audio and lock-screen controls.
+function configurePlaybackSession() {
+    // iOS: use the music category rather than audio silenced by the Ring/Silent switch.
+    try {
+        if (navigator.audioSession) navigator.audioSession.type = "playback";
+    } catch (error) {
+        console.warn("Nie udało się ustawić sesji odtwarzania:", error);
+    }
+}
+
+configurePlaybackSession();
 const player = document.createElement("audio");
 player.preload = "auto";
 player.setAttribute("playsinline", "");
@@ -725,6 +735,7 @@ if ("mediaSession" in navigator) {
 }
 
 document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) configurePlaybackSession();
     if (document.hidden) {
         resumeAfterInterruption = isPlaying;
     } else if (resumeAfterInterruption && player.paused && !player.ended && mixURL) {
@@ -733,6 +744,7 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 window.addEventListener("pageshow", () => {
+    configurePlaybackSession();
     if (resumeAfterInterruption && player.paused && !player.ended && mixURL) {
         resumeAfterInterruption = false;
         player.play().catch(handlePlaybackError);
@@ -1603,6 +1615,7 @@ function parseTimestamp(value) {
 ========================================= */
 
 function createSources(offset) {
+    configurePlaybackSession();
     player.currentTime = Math.max(0, Math.min(offset, duration));
     player.play().catch(handlePlaybackError);
 }
