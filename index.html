@@ -592,8 +592,6 @@ const sectionsElement =
 let audioContext = null;
 
 let buffers = [];
-let sources = [];
-let gainNodes = [];
 
 let trackStates = [];
 
@@ -603,11 +601,144 @@ let isPlaying = false;
 
 let position = 0;
 
-let startedAt = 0;
 
 let returnPoint = 0;
 
 let loadingVersion = 0;
+
+// A real media element lets the OS manage background audio and lock-screen controls.
+const player = document.createElement("audio");
+player.preload = "auto";
+player.setAttribute("playsinline", "");
+player.hidden = true;
+document.body.appendChild(player);
+let mixURL = null;
+let mixVersion = 0;
+let mixTimer = null;
+let lastMediaPositionUpdate = 0;
+let resumeAfterInterruption = false;
+
+function handlePlaybackError(error) {
+    if (error.name === "AbortError") return;
+    resumeAfterInterruption = false;
+    position = player.currentTime || position;
+    isPlaying = false;
+    updatePlayPauseButton();
+    statusDisplay.textContent = "Dotknij Play, aby wznowić dźwięk.";
+}
+
+// Render all voices onto one timeline, so background playback cannot desynchronize them.
+async function prepareMix(songVersion = loadingVersion) {
+    const version = ++mixVersion;
+    const offline = new OfflineAudioContext(2, Math.ceil(duration * 44100), 44100);
+    const anySolo = trackStates.some(state => state.solo);
+    const levels = trackStates.map(state =>
+        state.muted || (anySolo && !state.solo) ? 0 : state.volume);
+    const headroom = Math.max(1, buffers.length);
+    buffers.forEach((buffer, index) => {
+        const source = offline.createBufferSource();
+        const gain = offline.createGain();
+        source.buffer = buffer;
+        gain.gain.value = levels[index] / headroom;
+        source.connect(gain).connect(offline.destination);
+        source.start();
+    });
+    const rendered = await offline.startRendering();
+    if (version !== mixVersion || songVersion !== loadingVersion) return;
+    const wav = new ArrayBuffer(44 + rendered.length * 4);
+    const view = new DataView(wav);
+    const write = (offset, text) => {
+        for (let i = 0; i < text.length; i++) view.setUint8(offset + i, text.charCodeAt(i));
+    };
+    write(0, "RIFF"); view.setUint32(4, wav.byteLength - 8, true);
+    write(8, "WAVEfmt "); view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); view.setUint16(22, 2, true);
+    view.setUint32(24, 44100, true); view.setUint32(28, 176400, true);
+    view.setUint16(32, 4, true); view.setUint16(34, 16, true);
+    write(36, "data"); view.setUint32(40, wav.byteLength - 44, true);
+    const channels = [rendered.getChannelData(0), rendered.getChannelData(1)];
+    for (let i = 0; i < rendered.length; i++) {
+        for (let ch = 0; ch < 2; ch++) {
+            const sample = Math.max(-1, Math.min(1, channels[ch][i]));
+            view.setInt16(44 + i * 4 + ch * 2, sample * (sample < 0 ? 32768 : 32767), true);
+        }
+    }
+    const offset = getCurrentPosition();
+    const playing = isPlaying;
+    const previousURL = mixURL;
+    mixURL = URL.createObjectURL(new Blob([wav], {type: "audio/wav"}));
+    player.src = mixURL;
+    player.load();
+    player.currentTime = Math.min(offset, duration);
+    if (previousURL) URL.revokeObjectURL(previousURL);
+    if (playing) player.play().catch(handlePlaybackError);
+    statusDisplay.textContent = "Gotowe";
+}
+
+player.addEventListener("play", () => {
+    isPlaying = true;
+    resumeAfterInterruption = false;
+    updatePlayPauseButton();
+    updateMediaSession();
+});
+player.addEventListener("pause", () => {
+    if (!player.paused || !isPlaying || player.ended) return;
+    position = player.currentTime;
+    isPlaying = false;
+    updatePlayPauseButton();
+    updateMediaSession();
+});
+player.addEventListener("ended", () => {
+    position = duration;
+    isPlaying = false;
+    resumeAfterInterruption = false;
+    updatePlayPauseButton();
+    updateMediaSession();
+});
+
+function updateMediaSession() {
+    if (!("mediaSession" in navigator)) return;
+    const state = isPlaying ? "playing" : "paused";
+    if (navigator.mediaSession.playbackState !== state) {
+        navigator.mediaSession.playbackState = state;
+        lastMediaPositionUpdate = 0;
+    }
+    const now = performance.now();
+    if (duration && navigator.mediaSession.setPositionState && now - lastMediaPositionUpdate > 1000) {
+        lastMediaPositionUpdate = now;
+        navigator.mediaSession.setPositionState({duration, playbackRate: 1,
+            position: Math.max(0, Math.min(getCurrentPosition(), duration))});
+    }
+}
+
+if ("mediaSession" in navigator) {
+    const actions = {
+        play: () => { if (buffers.length && mixURL) createSources(position >= duration ? 0 : position); },
+        pause: () => { resumeAfterInterruption = false; stopSources(); },
+        seekbackward: event => skipBy(-(event.seekOffset || 10)),
+        seekforward: event => skipBy(event.seekOffset || 10),
+        seekto: event => skipBy(event.seekTime - getCurrentPosition())
+    };
+    for (const [action, handler] of Object.entries(actions)) {
+        try { navigator.mediaSession.setActionHandler(action, handler); } catch (_) {}
+    }
+}
+
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        resumeAfterInterruption = isPlaying;
+    } else if (resumeAfterInterruption && player.paused && !player.ended && mixURL) {
+        resumeAfterInterruption = false;
+        player.play().catch(handlePlaybackError);
+    }
+});
+window.addEventListener("pageshow", () => {
+    if (resumeAfterInterruption && player.paused && !player.ended && mixURL) {
+        resumeAfterInterruption = false;
+        player.play().catch(handlePlaybackError);
+    }
+});
+
 
 
 /*
@@ -671,7 +802,14 @@ async function loadSong(id) {
     const version =
         ++loadingVersion;
 
+    clearTimeout(mixTimer);
+    ++mixVersion;
+    resumeAfterInterruption = false;
     stopSources();
+    player.removeAttribute("src");
+    player.load();
+    if (mixURL) URL.revokeObjectURL(mixURL);
+    mixURL = null;
 
     isPlaying = false;
 
@@ -686,7 +824,6 @@ async function loadSong(id) {
     updatePlayPauseButton();
 
     buffers = [];
-    gainNodes = [];
     trackStates = [];
 
     mixer.innerHTML = "";
@@ -720,6 +857,9 @@ async function loadSong(id) {
 
     songTitle.textContent =
         song.title;
+    if ("mediaSession" in navigator && "MediaMetadata" in window) {
+        navigator.mediaSession.metadata = new MediaMetadata({title: song.title, artist: "GV"});
+    }
 
 
     statusDisplay.textContent =
@@ -917,23 +1057,6 @@ async function loadSong(id) {
                 });
 
 
-                const gain =
-                    context.createGain();
-
-
-                gain.gain.value = 1;
-
-
-                gain.connect(
-                    context.destination
-                );
-
-
-                gainNodes.push(
-                    gain
-                );
-
-
                 const row =
                     document.createElement(
                         "div"
@@ -1059,6 +1182,9 @@ async function loadSong(id) {
             }
         );
 
+
+        await prepareMix(version);
+        if (version !== loadingVersion) return;
 
         playPauseButton.disabled =
             false;
@@ -1477,61 +1603,8 @@ function parseTimestamp(value) {
 ========================================= */
 
 function createSources(offset) {
-
-    const context =
-        getAudioContext();
-
-
-    sources =
-        buffers.map(
-            (buffer, index) => {
-
-                const source =
-                    context
-                        .createBufferSource();
-
-
-                source.buffer =
-                    buffer;
-
-
-                source.connect(
-                    gainNodes[index]
-                );
-
-
-                return source;
-
-            }
-        );
-
-
-    /*
-    Wszystkie ścieżki dostają
-    identyczny czas startu.
-    */
-
-    const startTime =
-        context.currentTime +
-        0.05;
-
-
-    sources.forEach(
-        source => {
-
-            source.start(
-                startTime,
-                offset
-            );
-
-        }
-    );
-
-
-    startedAt =
-        startTime -
-        offset;
-
+    player.currentTime = Math.max(0, Math.min(offset, duration));
+    player.play().catch(handlePlaybackError);
 }
 
 
@@ -1573,20 +1646,6 @@ playPauseButton.addEventListener(
 
 
         /* PLAY */
-
-        const context =
-            getAudioContext();
-
-
-        if (
-            context.state ===
-            "suspended"
-        ) {
-
-            await context.resume();
-
-        }
-
 
         /*
         Play po zakończeniu utworu
@@ -1660,56 +1719,11 @@ function updatePlayPauseButton() {
 ========================================= */
 
 function stopSources() {
-
-    sources.forEach(
-        source => {
-
-            try {
-                source.stop();
-            }
-            catch (e) {}
-
-
-            try {
-                source.disconnect();
-            }
-            catch (e) {}
-
-        }
-    );
-
-
-    sources = [];
-
+    player.pause();
 }
 
-
-/* =========================================
-   AKTUALNA POZYCJA
-========================================= */
-
 function getCurrentPosition() {
-
-    if (!isPlaying) {
-
-        return position;
-
-    }
-
-
-    const context =
-        getAudioContext();
-
-
-    return Math.min(
-
-        context.currentTime -
-        startedAt,
-
-        duration
-
-    );
-
+    return isPlaying ? Math.min(player.currentTime, duration) : position;
 }
 
 
@@ -1832,52 +1846,14 @@ returnButton.addEventListener(
 ========================================= */
 
 function updateMix() {
-
-    const anySolo =
-        trackStates.some(
-            state =>
-                state.solo
-        );
-
-
-    trackStates.forEach(
-        (state, index) => {
-
-            let audible =
-                true;
-
-
-            if (
-                state.muted
-            ) {
-
-                audible =
-                    false;
-
-            }
-
-
-            if (
-                anySolo &&
-                !state.solo
-            ) {
-
-                audible =
-                    false;
-
-            }
-
-
-            gainNodes[index]
-                .gain.value =
-
-                audible
-                    ? state.volume
-                    : 0;
-
-        }
-    );
-
+    clearTimeout(mixTimer);
+    statusDisplay.textContent = "Przygotowanie miksu...";
+    mixTimer = setTimeout(() => {
+        prepareMix().catch(error => {
+            console.error(error);
+            statusDisplay.textContent = "Nie udało się zmienić miksu. Spróbuj ponownie.";
+        });
+    }, 200);
 }
 
 
@@ -1891,35 +1867,6 @@ function updateInterface() {
 
         let current =
             getCurrentPosition();
-
-
-        /*
-        KONIEC UTWORU
-        */
-
-        if (
-            isPlaying &&
-            current >= duration
-        ) {
-
-            stopSources();
-
-
-            isPlaying =
-                false;
-
-
-            position =
-                duration;
-
-
-            current =
-                duration;
-
-
-            updatePlayPauseButton();
-
-        }
 
 
         seek.value =
@@ -1950,6 +1897,7 @@ function updateInterface() {
     }
 
 
+    updateMediaSession();
     requestAnimationFrame(
         updateInterface
     );
