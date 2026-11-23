@@ -627,6 +627,55 @@ let mixVersion = 0;
 let mixTimer = null;
 let lastMediaPositionUpdate = 0;
 let resumeAfterInterruption = false;
+let liveSources = [];
+let liveGains = [];
+let mixDirty = false;
+
+function stopLiveSources() {
+    liveSources.forEach(source => { try { source.stop(); } catch (_) {} });
+    liveSources = [];
+    liveGains = [];
+}
+
+function applyLiveLevels() {
+    const anySolo = trackStates.some(state => state.solo);
+    const headroom = Math.max(1, buffers.length);
+    liveGains.forEach((gain, index) => {
+        const state = trackStates[index];
+        const level = state.muted || (anySolo && !state.solo) ? 0 : state.volume;
+        gain.gain.setTargetAtTime(level / headroom, audioContext.currentTime, 0.01);
+    });
+}
+
+function startLiveSources(offset) {
+    stopLiveSources();
+    if (document.hidden || offset >= duration) return;
+    const context = getAudioContext();
+    if (context.state !== "running") context.resume().catch(console.error);
+    buffers.forEach(buffer => {
+        const source = context.createBufferSource();
+        const gain = context.createGain();
+        gain.gain.value = 0;
+        source.buffer = buffer;
+        source.connect(gain).connect(context.destination);
+        liveSources.push(source);
+        liveGains.push(gain);
+    });
+    applyLiveLevels();
+    const start = context.currentTime + 0.02;
+    liveSources.forEach(source => source.start(start, offset));
+}
+
+function scheduleMix() {
+    clearTimeout(mixTimer);
+    if (!mixDirty) return;
+    mixTimer = setTimeout(() => {
+        prepareMix().catch(error => {
+            console.error(error);
+            statusDisplay.textContent = "Nie udało się zmienić miksu. Spróbuj ponownie.";
+        });
+    }, 200);
+}
 
 function handlePlaybackError(error) {
     if (error.name === "AbortError") return;
@@ -654,7 +703,7 @@ async function prepareMix(songVersion = loadingVersion) {
         source.start();
     });
     const rendered = await offline.startRendering();
-    if (version !== mixVersion || songVersion !== loadingVersion) return;
+    if (version !== mixVersion || songVersion !== loadingVersion || (mixDirty && isPlaying && !document.hidden)) return;
     const wav = new ArrayBuffer(44 + rendered.length * 4);
     const view = new DataView(wav);
     const write = (offset, text) => {
@@ -682,10 +731,15 @@ async function prepareMix(songVersion = loadingVersion) {
     player.currentTime = Math.min(offset, duration);
     if (previousURL) URL.revokeObjectURL(previousURL);
     if (playing) player.play().catch(handlePlaybackError);
+    mixDirty = false;
     statusDisplay.textContent = "Gotowe";
 }
 
 player.addEventListener("play", () => {
+    if (!document.hidden && !liveSources.length) {
+        player.muted = true;
+        startLiveSources(player.currentTime);
+    }
     isPlaying = true;
     resumeAfterInterruption = false;
     updatePlayPauseButton();
@@ -693,12 +747,14 @@ player.addEventListener("play", () => {
 });
 player.addEventListener("pause", () => {
     if (!player.paused || !isPlaying || player.ended) return;
+    stopLiveSources();
     position = player.currentTime;
     isPlaying = false;
     updatePlayPauseButton();
     updateMediaSession();
 });
 player.addEventListener("ended", () => {
+    stopLiveSources();
     position = duration;
     isPlaying = false;
     resumeAfterInterruption = false;
@@ -737,10 +793,19 @@ if ("mediaSession" in navigator) {
 document.addEventListener("visibilitychange", () => {
     if (!document.hidden) configurePlaybackSession();
     if (document.hidden) {
+        stopLiveSources();
+        player.muted = false;
+        scheduleMix();
         resumeAfterInterruption = isPlaying;
-    } else if (resumeAfterInterruption && player.paused && !player.ended && mixURL) {
+    } else {
+        if (isPlaying && !player.paused) {
+            player.muted = true;
+            startLiveSources(player.currentTime);
+        }
+        if (resumeAfterInterruption && player.paused && !player.ended && mixURL) {
         resumeAfterInterruption = false;
         player.play().catch(handlePlaybackError);
+        }
     }
 });
 window.addEventListener("pageshow", () => {
@@ -816,6 +881,7 @@ async function loadSong(id) {
 
     clearTimeout(mixTimer);
     ++mixVersion;
+    mixDirty = false;
     resumeAfterInterruption = false;
     stopSources();
     player.removeAttribute("src");
@@ -1195,8 +1261,10 @@ async function loadSong(id) {
         );
 
 
-        await prepareMix(version);
-        if (version !== loadingVersion) return;
+        do {
+            await prepareMix(version);
+            if (version !== loadingVersion) return;
+        } while (!mixURL);
 
         playPauseButton.disabled =
             false;
@@ -1616,6 +1684,8 @@ function parseTimestamp(value) {
 
 function createSources(offset) {
     configurePlaybackSession();
+    player.muted = !document.hidden;
+    if (!document.hidden) startLiveSources(offset);
     player.currentTime = Math.max(0, Math.min(offset, duration));
     player.play().catch(handlePlaybackError);
 }
@@ -1732,6 +1802,7 @@ function updatePlayPauseButton() {
 ========================================= */
 
 function stopSources() {
+    stopLiveSources();
     player.pause();
 }
 
@@ -1859,14 +1930,10 @@ returnButton.addEventListener(
 ========================================= */
 
 function updateMix() {
-    clearTimeout(mixTimer);
-    statusDisplay.textContent = "Przygotowanie miksu...";
-    mixTimer = setTimeout(() => {
-        prepareMix().catch(error => {
-            console.error(error);
-            statusDisplay.textContent = "Nie udało się zmienić miksu. Spróbuj ponownie.";
-        });
-    }, 200);
+    ++mixVersion;
+    mixDirty = true;
+    applyLiveLevels();
+    if (document.hidden || !isPlaying) scheduleMix();
 }
 
 
