@@ -1,4 +1,34 @@
 {
+  "gdySieChrystusRodzi": {
+    "title": "Kolędy: Gdy się Chrystus rodzi",
+    "folder": "utwory/kolędy/gdy się chrystus rodzi/",
+    "tracks": [
+      ["Podkład", "gdy się chrystus podklad.mp3"],
+      ["Sopran", "gdy się chrystus Sop.mp3"],
+      ["Alt", "gdy się chrystus Alt.mp3"],
+      ["Tenor", "gdy się chrystus Ten.mp3"]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": []
+  },
+
+  "gdySlicznaPanna": {
+    "title": "Kolędy: Gdy śliczna Panna",
+    "folder": "utwory/kolędy/gdy śliczna/",
+    "tracks": [
+      ["Podkład", "gdy śliczna panna podkład.mp3"],
+      ["Sopran górny", "gdy śliczna panna sopran górny.mp3"],
+      ["Sopran dolny", "gdy śliczna panna sopran dolny.mp3"],
+      ["Alt", "gdy śliczna panna alt.mp3"],
+      ["Tenor", "gdy śliczna panna tenor.mp3"]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": [
+      ["Zwrotka", "0:22"],
+      ["Refren", "0:41"]
+    ]
+  },
+
   "goTellItOnTheMountain": {
     "title": "Kolędy: Go Tell It On The Mountain",
     "folder": "utwory/kolędy/go tell it/",
@@ -53,36 +83,6 @@
     ]
   },
 
-  "gdySlicznaPanna": {
-    "title": "Kolędy: Gdy śliczna Panna",
-    "folder": "utwory/kolędy/gdy śliczna/",
-    "tracks": [
-      ["Podkład", "gdy śliczna panna podkład.mp3"],
-      ["Sopran górny", "gdy śliczna panna sopran górny.mp3"],
-      ["Sopran dolny", "gdy śliczna panna sopran dolny.mp3"],
-      ["Alt", "gdy śliczna panna alt.mp3"],
-      ["Tenor", "gdy śliczna panna tenor.mp3"]
-    ],
-    "lyrics": "tekst.txt",
-    "sections": [
-      ["Zwrotka", "0:22"],
-      ["Refren", "0:41"]
-    ]
-  },
-
-  "gdySieChrystusRodzi": {
-    "title": "Kolędy: Gdy się Chrystus rodzi",
-    "folder": "utwory/kolędy/gdy się chrystus rodzi/",
-    "tracks": [
-      ["Podkład", "gdy się chrystus podklad.mp3"],
-      ["Sopran", "gdy się chrystus Sop.mp3"],
-      ["Alt", "gdy się chrystus Alt.mp3"],
-      ["Tenor", "gdy się chrystus Ten.mp3"]
-    ],
-    "lyrics": "tekst.txt",
-    "sections": []
-  },
-
   "ojMaluski": {
     "title": "Kolędy: Oj Maluśki",
     "folder": "utwory/kolędy/oj maluśki/",
@@ -100,6 +100,18 @@
       ["Refren 2", "1:25"],
       ["Lili laj", "1:40"]
     ]
+  },
+
+  "szczedryk": {
+    "title": "Kolędy: Szczedryk",
+    "folder": "utwory/kolędy/szczedryk/",
+    "tracks": [
+      ["Sopran", "szczedryk SOPRAN.mp3"],
+      ["Alt", "szczedryk ALT.mp3"],
+      ["Tenor", "szczedryk TENOR.mp3"]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": []
   },
 
   "ohLord": {
