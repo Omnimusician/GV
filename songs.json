@@ -102,6 +102,19 @@
     ]
   },
 
+  "somebodysTalkingBoutJesus": {
+    "title": "Kolędy: Somebody's Talking 'Bout Jesus",
+    "folder": "utwory/kolędy/somebody talking/",
+    "tracks": [
+      ["Podkład", "somebody talking bout jesus podklad.mp3"],
+      ["Sopran", "somebody talking bout jesus sop.mp3"],
+      ["Alt", "somebody talking bout jesus alt.mp3"],
+      ["Tenor", "somebody talking bout jesus ten.mp3"]
+    ],
+    "lyrics": "tekst.txt",
+    "sections": []
+  },
+
   "szczedryk": {
     "title": "Kolędy: Szczedryk",
     "folder": "utwory/kolędy/szczedryk/",
